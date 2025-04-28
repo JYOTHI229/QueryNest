@@ -18,7 +18,7 @@ connectDB();
 app.use(cors({
     origin: process.env.CLIENT_URL,
     credentials: true,
-    secure:false
+    secure:false //development 
   }));
   
 app.use(express.json());
@@ -26,8 +26,8 @@ app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
 
-app.get("/auth",(req,res)=>{
-    res.send("Authentication");
+app.get("/api/hello",(req,res)=>{
+    res.json({message:"Hello from backend with proxy!"});
 })
 
 app.get("/",async (req,res,next)=>{

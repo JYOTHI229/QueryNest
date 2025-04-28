@@ -1,21 +1,35 @@
 import { useState } from "react";
-import axios from "../axios";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-  const [form, setForm] = useState({ email: '', password: '' });
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await axios.post('/auth/login', form);
-    alert('Logged in successfully!');
+    try {
+      await login(email, password);
+      console.log("login SUccessful");
+      navigate('/');
+    } catch (err) {
+      alert('Login failed!');
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input type="email" placeholder="Email" onChange={(e) => setForm({...form, email: e.target.value})} required />
-      <input type="password" placeholder="Password" onChange={(e) => setForm({...form, password: e.target.value})} required />
-      <button type="submit">Login</button>
-    </form>
+    <div>
+      <h2>Login</h2>
+      <form onSubmit={handleSubmit}>
+        <input type="email" placeholder="Email" value={email}
+          onChange={(e) => setEmail(e.target.value)} required />
+        <input type="password" placeholder="Password" value={password}
+          onChange={(e) => setPassword(e.target.value)} required />
+        <button type="submit">Login</button>
+      </form>
+    </div>
   );
 };
 

@@ -1,0 +1,75 @@
+.quora-home {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Top Navbar */
+.quora-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: white;
+  border-bottom: 1px solid #ddd;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.quora-logo {
+  font-size: 24px;
+  font-weight: bold;
+  color: #b92b27;
+  cursor: pointer;
+}
+
+.quora-auth-buttons .nav-button {
+  margin-left: 10px;
+  padding: 6px 14px;
+  background-color: #b92b27;
+  color: white;
+  border: none;
+  border-radius: 18px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Question Feed */
+.quora-feed {
+  max-width: 700px;
+  margin: 2rem auto;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.feed-heading {
+  margin-bottom: 1.5rem;
+  font-size: 22px;
+  color: #2e2e2e;
+  text-align: center;
+}
+
+.question-box {
+  border-bottom: 1px solid #ddd;
+  padding: 1rem 0;
+}
+
+.question-box h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  color: #202020;
+}
+
+.question-box p {
+  margin: 0.2rem 0;
+  color: #555;
+}
+
+.author-name {
+  font-size: 14px;
+  color: #777;
+  margin-top: 0.5rem;
+}

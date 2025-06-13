@@ -1,0 +1,46 @@
+.update-profile-container {
+    max-width: 500px;
+    margin: 4rem auto;
+    padding: 2rem;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    font-family: "Segoe UI", sans-serif;
+  }
+  
+  .update-profile-heading {
+    text-align: center;
+    color: #b92b27;
+    margin-bottom: 2rem;
+    font-size: 26px;
+  }
+  
+  .update-form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .update-form input {
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+  }
+  
+  .update-form button {
+    margin-top: 1rem;
+    padding: 12px;
+    background-color: #b92b27;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .update-form button:hover {
+    background-color: #a1221f;
+  }
+  

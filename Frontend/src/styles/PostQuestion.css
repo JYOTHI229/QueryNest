@@ -1,0 +1,52 @@
+.post-question-container {
+    max-width: 600px;
+    margin: 4rem auto;
+    padding: 2rem;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    font-family: "Segoe UI", sans-serif;
+  }
+  
+  .post-question-heading {
+    text-align: center;
+    color: #b92b27;
+    margin-bottom: 2rem;
+    font-size: 26px;
+  }
+  
+  .post-question-form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .post-question-form input,
+  .post-question-form textarea {
+    padding: 12px;
+    margin-bottom: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 16px;
+  }
+  
+  .post-question-form textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
+  
+  .post-question-form button {
+    padding: 12px;
+    background-color: #b92b27;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .post-question-form button:hover {
+    background-color: #a1221f;
+  }
+  

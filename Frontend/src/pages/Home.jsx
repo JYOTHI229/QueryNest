@@ -1,8 +1,13 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useEffect, useState } from "react";
+import api from "../api";
+import "../styles/Home.css";
 
 const Home = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [questions, setQuestions] = useState([]);
 
   const handleLogout = async () => {
     try {
@@ -12,29 +17,54 @@ const Home = () => {
     }
   };
 
-  return (
-    <div style={{ textAlign: "center", padding: "2rem" }}>
-      <h1>Welcome to QueryNest</h1>
-      <p>Your place to ask and answer amazing questions!</p>
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const res = await api.get("/questions/all");
+        setQuestions(res.data);
+      } catch (err) {
+        console.error("Error fetching questions:", err.response?.data || err.message);
+      }
+    };
+    fetchQuestions();
+  }, []);
 
-      {/* If user is logged in */}
-      {user ? (
-        <div>
-          <h2>Hello, {user.name} 👋</h2>
-          <p>Email: {user.email}</p>
-          <button onClick={handleLogout}>Logout</button>
+  return (
+    <div className="quora-home">
+      {/* Top Navbar */}
+      <nav className="quora-navbar">
+        <div className="quora-logo" onClick={() => navigate("/")}>QueryNest</div>
+        <div className="quora-auth-buttons">
+          {user ? (
+            <>
+              <button className="nav-button" onClick={() => navigate("/profile")}>Profile</button>
+              <button className="nav-button" onClick={handleLogout}>Logout</button>
+              <button className="nav-button" onClick={() => navigate("/ask")}>ASK</button>
+            </>
+          ) : (
+            <>
+              <Link to="/login"><button className="nav-button">Login</button></Link>
+              <Link to="/register"><button className="nav-button">Register</button></Link>
+            </>
+          )}
         </div>
-      ) : (
-        // If user is not logged in
-        <div style={{ marginTop: "1rem" }}>
-          <Link to="/register">
-            <button style={{ marginRight: "1rem" }}>Register</button>
-          </Link>
-          <Link to="/login">
-            <button>Login</button>
-          </Link>
-        </div>
-      )}
+      </nav>
+
+      {/* Questions Feed Only */}
+      <main className="quora-feed">
+        <h2 className="feed-heading">Top Questions</h2>
+        {questions.length === 0 ? (
+          <p>No questions yet. Be the first to ask!</p>
+        ) : (
+          questions.map((q) => (
+            <div key={q._id} className="question-box">
+              <h3>{q.title}</h3>
+              <p>{q.description}</p>
+              <p className="author-name"><strong>Asked by:</strong> {q.askedBy?.name || "Anonymous"}</p>
+            </div>
+          ))
+        )}
+      </main>
     </div>
   );
 };

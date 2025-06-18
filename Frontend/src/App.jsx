@@ -7,6 +7,8 @@ import UpdateProfile from "./pages/UpdateProfile";
 import PostQuestion from "./pages/PostQuestion";
 import PrivateRoute from "./components/PrivateRoute";
 import QuestionDetails from "./pages/QuestionDetails";
+import MyQuestions from "./pages/MyQuestions";
+import EditQuestion from "./pages/EditQuestion";
 import "./App.css";
 
 
@@ -43,6 +45,11 @@ function App() {
 
 
         <Route path="/questions/:id" element={<QuestionDetails />} />
+
+        <Route path="/my-questions" element={<MyQuestions />} />
+
+        <Route path="/questions/edit/:id" element={<EditQuestion />} />
+
 
 
         

@@ -73,3 +73,13 @@
   color: #777;
   margin-top: 0.5rem;
 }
+
+.question-link {
+  text-decoration: none;
+  color: #2e2e2e;
+}
+
+.question-link:hover {
+  color: #b92b27;
+  text-decoration: underline;
+}

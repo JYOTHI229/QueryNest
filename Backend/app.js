@@ -8,6 +8,8 @@ import cookieParser from "cookie-parser";
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import questionRoutes from './routes/questionRoutes.js';
+import answerRoutes from './routes/answerRoutes.js';
+
 
 import { ExpressError } from "./utils/ExpressError.js";
 import { wrapAsync } from "./utils/wrapAsync.js";
@@ -29,6 +31,7 @@ app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use("/api/questions", questionRoutes);
+app.use('/api/answers', answerRoutes);
 
 app.get("/api/hello",(req,res)=>{
     res.json({message:"Hello from backend with proxy!"});

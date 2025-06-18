@@ -1,0 +1,35 @@
+.question-detail-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #fff;
+  }
+  
+  .question-header h2 {
+    font-size: 2rem;
+    color: #333;
+  }
+  
+  .question-meta {
+    color: #777;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+  
+  .question-description {
+    font-size: 1.1rem;
+    color: #444;
+  }
+  
+  .answers-section {
+    margin-top: 2rem;
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
+  }
+  
+  .answers-section h3 {
+    margin-bottom: 0.5rem;
+  }
+  

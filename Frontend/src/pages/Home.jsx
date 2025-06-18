@@ -50,7 +50,7 @@ const Home = () => {
         </div>
       </nav>
 
-      {/* Questions Feed Only */}
+      {/* Question Feed */}
       <main className="quora-feed">
         <h2 className="feed-heading">Top Questions</h2>
         {questions.length === 0 ? (
@@ -58,9 +58,14 @@ const Home = () => {
         ) : (
           questions.map((q) => (
             <div key={q._id} className="question-box">
-              <h3>{q.title}</h3>
+              {/* Wrap title in Link */}
+              <Link to={`/questions/${q._id}`} className="question-link">
+                <h3>{q.title}</h3>
+              </Link>
               <p>{q.description}</p>
-              <p className="author-name"><strong>Asked by:</strong> {q.askedBy?.name || "Anonymous"}</p>
+              <p className="author-name">
+                <strong>Asked by:</strong> {q.askedBy?.name || "Anonymous"}
+              </p>
             </div>
           ))
         )}

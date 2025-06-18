@@ -5,9 +5,10 @@ import Login from "./pages/Login";
 import Profile from "./pages/Profile"; 
 import UpdateProfile from "./pages/UpdateProfile";
 import PostQuestion from "./pages/PostQuestion";
-import AllQuestions from "./pages/AllQuestions";
 import PrivateRoute from "./components/PrivateRoute";
+import QuestionDetails from "./pages/QuestionDetails";
 import "./App.css";
+
 
 function App() {
   return (
@@ -39,7 +40,10 @@ function App() {
         />
         
         <Route path="/ask" element={<PrivateRoute><PostQuestion /></PrivateRoute>} />
-        <Route path="/questions" element={<PrivateRoute><AllQuestions /></PrivateRoute>} />
+
+
+        <Route path="/questions/:id" element={<QuestionDetails />} />
+
 
         
       </Routes>

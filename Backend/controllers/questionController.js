@@ -24,8 +24,22 @@ export const postQuestion = async (req, res) => {
   };
   
 
+// GET single question by ID
+export const question = async (req, res) => {
+  try {
+    const question = await Question.findById(req.params.id).populate("askedBy", "name email");
+    if (!question) return res.status(404).json({ message: "Question not found" });
+    res.json(question);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch question" });
+  }
+};
+
 
 export const getAllQuestions = async (req, res) => {
   const questions = await Question.find().populate("askedBy", "name");
   res.json(questions);
 };
+
+
+

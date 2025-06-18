@@ -1,6 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
+import SearchBar from "../components/SearchBar";
+
 import api from "../api";
 import "../styles/Home.css";
 
@@ -34,6 +36,7 @@ const Home = () => {
       {/* Top Navbar */}
       <nav className="quora-navbar">
         <div className="quora-logo" onClick={() => navigate("/")}>QueryNest</div>
+        <SearchBar/>
         <div className="quora-auth-buttons">
           {user ? (
             <>

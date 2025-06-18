@@ -102,4 +102,22 @@ export const deleteQuestion = async (req, res) => {
   }
 };
 
+//Search 
+export const searchQuestions = async (req, res) => {
+  const { query } = req.query;
+  try {
+    const questions = await Question.find({
+      $or: [
+        { title: { $regex: query, $options: "i" } },
+        { description: { $regex: query, $options: "i" } },
+      ],
+    }).populate("askedBy", "name");
+
+    res.status(200).json(questions);
+  } catch (err) {
+    res.status(500).json({ message: "Search failed", error: err.message });
+  }
+};
+
+
 

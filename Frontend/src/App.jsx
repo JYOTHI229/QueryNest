@@ -9,6 +9,7 @@ import PrivateRoute from "./components/PrivateRoute";
 import QuestionDetails from "./pages/QuestionDetails";
 import MyQuestions from "./pages/MyQuestions";
 import EditQuestion from "./pages/EditQuestion";
+import SearchResults from "./pages/SearchResults";
 import "./App.css";
 
 
@@ -49,6 +50,9 @@ function App() {
         <Route path="/my-questions" element={<MyQuestions />} />
 
         <Route path="/questions/edit/:id" element={<EditQuestion />} />
+
+        <Route path="/search" element={<SearchResults />} />
+
 
 
 

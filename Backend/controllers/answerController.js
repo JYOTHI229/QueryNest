@@ -33,3 +33,52 @@ export const getAnswers = async (req, res) => {
     res.status(500).json({ message: 'Error fetching answers', error: err.message });
   }
 };
+
+// ✏️ Update an answer
+export const updateAnswer = async (req, res) => {
+  const { id } = req.params;
+  const { content } = req.body;
+
+  if (!content) {
+    return res.status(400).json({ message: "Content is required" });
+  }
+
+  try {
+    const answer = await Answer.findById(id);
+    if (!answer) {
+      return res.status(404).json({ message: "Answer not found" });
+    }
+
+    if (answer.answeredBy.toString() !== req.userId) {
+      return res.status(403).json({ message: "You can only edit your own answer" });
+    }
+
+    answer.content = content;
+    await answer.save();
+
+    res.status(200).json({ message: "Answer updated", answer });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update answer", error: err.message });
+  }
+};
+
+// 🗑️ Delete an answer
+export const deleteAnswer = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const answer = await Answer.findById(id);
+    if (!answer) {
+      return res.status(404).json({ message: "Answer not found" });
+    }
+
+    if (answer.answeredBy.toString() !== req.userId) {
+      return res.status(403).json({ message: "You can only delete your own answer" });
+    }
+
+    await answer.deleteOne();
+    res.status(200).json({ message: "Answer deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to delete answer", error: err.message });
+  }
+};

@@ -1,6 +1,6 @@
 import express from "express";
 import { postQuestion, getAllQuestions , question , getMyQuestions , editQuestion,
-    deleteQuestion } from "../controllers/questionController.js";
+    deleteQuestion , searchQuestions } from "../controllers/questionController.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -8,6 +8,7 @@ const router = express.Router();
 router.post("/posted", verifyToken, postQuestion);
 router.get("/all", getAllQuestions);
 router.get('/my', verifyToken, getMyQuestions);
+router.get('/search', searchQuestions);
 router.get("/:id", question);
 router.put('/:id', verifyToken, editQuestion);
 router.delete('/:id', verifyToken, deleteQuestion);

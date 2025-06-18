@@ -4,15 +4,16 @@ import api from "../api";
 import { useAuth } from "../context/AuthContext";
 
 const QuestionDetails = () => {
-  const { id } = useParams(); // /questions/:id
+  const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const [question, setQuestion] = useState(null);
   const [answers, setAnswers] = useState([]);
   const [newAnswer, setNewAnswer] = useState("");
+  const [editingAnswerId, setEditingAnswerId] = useState(null);
+  const [editedContent, setEditedContent] = useState("");
 
-  // Fetch question + answers
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -22,61 +23,82 @@ const QuestionDetails = () => {
         const resA = await api.get(`/answers/${id}`);
         setAnswers(resA.data);
       } catch (err) {
-        console.error("❌ Error loading question or answers:", err);
+        console.error("Error loading question or answers:", err);
       }
     };
 
     fetchData();
   }, [id]);
 
-  // Submit a new answer
   const handleAnswerSubmit = async (e) => {
     e.preventDefault();
     if (!newAnswer.trim()) return;
 
     try {
       const res = await api.post(`/answers/${id}`, { content: newAnswer });
-      setAnswers([res.data, ...answers]); // Prepend
+      setAnswers([res.data, ...answers]);
       setNewAnswer("");
     } catch (err) {
-      console.error("❌ Failed to submit answer:", err);
+      console.error("Failed to submit answer:", err);
       alert(err.response?.data?.message || "Error posting answer");
     }
   };
 
-  // Delete Question
-  const handleDelete = async () => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this question?");
-    if (!confirmDelete) return;
+  const handleEdit = (answer) => {
+    setEditingAnswerId(answer._id);
+    setEditedContent(answer.content);
+  };
 
+  const handleUpdateAnswer = async (answerId) => {
     try {
-      await api.delete(`/questions/${question._id}`);
-      alert("Question deleted");
-      navigate("/questions");
+      await api.put(`/answers/${answerId}`, { content: editedContent });
+      setAnswers((prev) =>
+        prev.map((a) => (a._id === answerId ? { ...a, content: editedContent } : a))
+      );
+      setEditingAnswerId(null);
+      setEditedContent("");
     } catch (err) {
-      alert(err.response?.data?.message || "Error deleting question");
+      alert(err.response?.data?.message || "Failed to update answer");
     }
   };
 
-  // UI
+  const handleDeleteAnswer = async (answerId) => {
+    const confirm = window.confirm("Are you sure you want to delete this answer?");
+    if (!confirm) return;
+
+    try {
+      await api.delete(`/answers/${answerId}`);
+      setAnswers((prev) => prev.filter((a) => a._id !== answerId));
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to delete answer");
+    }
+  };
+
   return (
     <div style={{ padding: "20px" }}>
       {question ? (
         <>
-          {/* Question Info */}
           <h2>{question.title}</h2>
           <p>{question.description}</p>
-          <p>
-            <strong>Asked by:</strong> {question.askedBy?.name || "Anonymous"}
-          </p>
+          <p><strong>Asked by:</strong> {question.askedBy?.name || "Anonymous"}</p>
 
-          {/* Edit/Delete if owner */}
           {user && question.askedBy?._id === user._id && (
             <div style={{ marginTop: "1rem" }}>
               <button onClick={() => navigate(`/questions/edit/${question._id}`)}>Edit</button>
               <button
-                onClick={handleDelete}
-                style={{ marginLeft: "1rem", backgroundColor: "#f44336", color: "#fff" }}
+                onClick={async () => {
+                  const confirm = window.confirm("Are you sure you want to delete this question?");
+                  if (confirm) {
+                    try {
+                      await api.delete(`/questions/${question._id}`);
+                      alert("Question deleted");
+                      navigate("/questions");
+                    } catch (err) {
+                      alert(err.response?.data?.message || "Error deleting question");
+                    }
+                  }
+                }}
+                style={{ marginLeft: "1rem" }}
               >
                 Delete
               </button>
@@ -84,30 +106,40 @@ const QuestionDetails = () => {
           )}
 
           <hr />
-
-          {/* Answers */}
           <h3>Answers</h3>
+
           {answers.length === 0 ? (
             <p>No answers yet. Be the first to answer!</p>
           ) : (
             answers.map((a) => (
-              <div
-                key={a._id}
-                style={{
-                  marginBottom: "1rem",
-                  borderBottom: "1px solid #ccc",
-                  paddingBottom: "1rem",
-                }}
-              >
-                <p>{a.content}</p>
-                <p>
-                  <strong>Answered by:</strong> {a.answeredBy?.name || "Anonymous"}
-                </p>
+              <div key={a._id} style={{ marginBottom: "1rem", borderBottom: "1px solid #ccc", paddingBottom: "1rem" }}>
+                {editingAnswerId === a._id ? (
+                  <>
+                    <textarea
+                      value={editedContent}
+                      onChange={(e) => setEditedContent(e.target.value)}
+                      rows="3"
+                      style={{ width: "100%" }}
+                    />
+                    <button onClick={() => handleUpdateAnswer(a._id)}>Save</button>
+                    <button onClick={() => setEditingAnswerId(null)}>Cancel</button>
+                  </>
+                ) : (
+                  <>
+                    <p>{a.content}</p>
+                    <p><strong>Answered by:</strong> {a.answeredBy?.name || "Anonymous"}</p>
+                    {user && a.answeredBy?._id === user._id && (
+                      <>
+                        <button onClick={() => handleEdit(a)} style={{ marginRight: "0.5rem" }}>Edit</button>
+                        <button onClick={() => handleDeleteAnswer(a._id)}>Delete</button>
+                      </>
+                    )}
+                  </>
+                )}
               </div>
             ))
           )}
 
-          {/* Answer form */}
           {user && (
             <>
               <hr />
@@ -122,9 +154,7 @@ const QuestionDetails = () => {
                   required
                 />
                 <br />
-                <button type="submit" style={{ marginTop: "0.5rem" }}>
-                  Submit Answer
-                </button>
+                <button type="submit">Submit Answer</button>
               </form>
             </>
           )}

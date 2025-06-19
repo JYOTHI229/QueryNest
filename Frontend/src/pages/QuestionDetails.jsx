@@ -44,6 +44,21 @@ const QuestionDetails = () => {
     }
   };
 
+  const handleAnswerVote = async (answerId, voteValue) => {
+    try {
+      const res = await api.post(`/answers/vote/${answerId}`, { vote: voteValue });
+      const { upvotes, downvotes } = res.data;
+
+      setAnswers((prev) =>
+        prev.map((a) =>
+          a._id === answerId ? { ...a, upvotes, downvotes } : a
+        )
+      );
+    } catch (err) {
+      alert(err.response?.data?.message || "Login required to vote");
+    }
+  };
+
   const handleEdit = (answer) => {
     setEditingAnswerId(answer._id);
     setEditedContent(answer.content);
@@ -128,11 +143,19 @@ const QuestionDetails = () => {
                   <>
                     <p>{a.content}</p>
                     <p><strong>Answered by:</strong> {a.answeredBy?.name || "Anonymous"}</p>
+
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <button onClick={() => handleAnswerVote(a._id, 1)}>👍</button>
+                      <span style={{ margin: "0 10px" }}>Upvotes: {a.upvotes || 0}</span>
+                      <button onClick={() => handleAnswerVote(a._id, -1)}>👎</button>
+                      <span style={{ marginLeft: "10px" }}>Downvotes: {a.downvotes || 0}</span>
+                    </div>
+
                     {user && a.answeredBy?._id === user._id && (
-                      <>
+                      <div style={{ marginTop: "0.5rem" }}>
                         <button onClick={() => handleEdit(a)} style={{ marginRight: "0.5rem" }}>Edit</button>
                         <button onClick={() => handleDeleteAnswer(a._id)}>Delete</button>
-                      </>
+                      </div>
                     )}
                   </>
                 )}

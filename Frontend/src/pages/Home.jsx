@@ -2,7 +2,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
 import SearchBar from "../components/SearchBar";
-
 import api from "../api";
 import "../styles/Home.css";
 
@@ -19,24 +18,43 @@ const Home = () => {
     }
   };
 
+  const fetchQuestions = async () => {
+    try {
+      const res = await api.get("/questions/all");
+      setQuestions(res.data);
+    } catch (err) {
+      console.error("Error fetching questions:", err.response?.data || err.message);
+    }
+  };
+
   useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        const res = await api.get("/questions/all");
-        setQuestions(res.data);
-      } catch (err) {
-        console.error("Error fetching questions:", err.response?.data || err.message);
-      }
-    };
     fetchQuestions();
   }, []);
+
+  const handleVote = async (id, voteValue) => {
+    try {
+      const res = await api.post(`/questions/vote/${id}`, { vote: voteValue });
+
+      const updated = res.data;
+
+      setQuestions((prev) =>
+        prev.map((q) =>
+          q._id === id
+            ? { ...q, upvotes: updated.upvotes, downvotes: updated.downvotes }
+            : q
+        )
+      );
+    } catch (err) {
+      alert(err.response?.data?.message || "Login required to vote");
+    }
+  };
 
   return (
     <div className="quora-home">
       {/* Top Navbar */}
       <nav className="quora-navbar">
         <div className="quora-logo" onClick={() => navigate("/")}>QueryNest</div>
-        <SearchBar/>
+        <SearchBar />
         <div className="quora-auth-buttons">
           {user ? (
             <>
@@ -61,7 +79,6 @@ const Home = () => {
         ) : (
           questions.map((q) => (
             <div key={q._id} className="question-box">
-              {/* Wrap title in Link */}
               <Link to={`/questions/${q._id}`} className="question-link">
                 <h3>{q.title}</h3>
               </Link>
@@ -69,6 +86,14 @@ const Home = () => {
               <p className="author-name">
                 <strong>Asked by:</strong> {q.askedBy?.name || "Anonymous"}
               </p>
+
+              {/* Voting Section */}
+              <div className="vote-section">
+                <button onClick={() => handleVote(q._id, 1)}>👍</button>
+                <span className="vote-count">Upvotes: {q.upvotes || 0}</span>
+                <button onClick={() => handleVote(q._id, -1)}>👎</button>
+                <span className="vote-count">Downvotes: {q.downvotes || 0}</span>
+              </div>
             </div>
           ))
         )}

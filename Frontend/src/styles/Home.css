@@ -83,3 +83,17 @@
   color: #b92b27;
   text-decoration: underline;
 }
+
+.vote-buttons {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vote-buttons button {
+  font-size: 1.1rem;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}

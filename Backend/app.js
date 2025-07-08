@@ -6,46 +6,47 @@ import express from "express";
 import { connectDB } from "./config/db.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import questionRoutes from './routes/questionRoutes.js';
 import answerRoutes from './routes/answerRoutes.js';
 
 const app = express();
-const port = process.env.PORT ;
+const port = process.env.PORT || 8000;
+
 connectDB();
 
-// Middlewares
+// Middleware
 app.use(cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true,
-    secure:true  
-  }));
-  
+  origin: process.env.CLIENT_URL,
+  credentials: true
+}));
 app.use(express.json());
 app.use(cookieParser());
 
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
-app.use("/api/questions", questionRoutes);
+app.use('/api/questions', questionRoutes);
 app.use('/api/answers', answerRoutes);
 
-app.get("/api/hello",(req,res)=>{
-    res.json({message:"Hello from backend with proxy!"});
-})
-
-app.get("/",async (req,res,next)=>{
-    res.send("hello");
-    next();
+// Test Route
+app.get("/api/hello", (req, res) => {
+  res.json({ message: "Hello from backend with proxy!" });
 });
 
-app.use((err,req,res,next)=>{
-    const {status=500,message}=err;
-    res.status(status).send(message);
-    next();
-})
+app.get("/", (req, res) => {
+  res.send("hello");
+});
 
-app.listen(port,()=>{
-    console.log(`app is listening at ${port}`);
-})
+// Error Middleware
+app.use((err, req, res, next) => {
+  const { status = 500, message = "Something went wrong" } = err;
+  res.status(status).json({ error: message });
+});
 
+// Start Server
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});

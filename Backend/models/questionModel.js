@@ -15,11 +15,11 @@ const questionSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  // ✅ Only a single "votes" Map
+ 
   votes: {
     type: Map,
-    of: Number, // 1 for upvote, -1 for downvote
-    default: {},
+    of: Number,
+    default: {}, 
   },
   createdAt: {
     type: Date,
@@ -30,13 +30,13 @@ const questionSchema = new mongoose.Schema({
   toObject: { virtuals: true },
 });
 
-// ✅ Virtuals — don't conflict with real fields
+// Safe virtuals to avoid errors when votes is undefined
 questionSchema.virtual("upvotes").get(function () {
-  return [...this.votes.values()].filter((v) => v === 1).length;
+  return this.votes ? [...this.votes.values()].filter((v) => v === 1).length : 0;
 });
 
 questionSchema.virtual("downvotes").get(function () {
-  return [...this.votes.values()].filter((v) => v === -1).length;
+  return this.votes ? [...this.votes.values()].filter((v) => v === -1).length : 0;
 });
 
 export const Question = mongoose.model("Question", questionSchema);

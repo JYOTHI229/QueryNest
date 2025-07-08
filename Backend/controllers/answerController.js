@@ -1,5 +1,5 @@
-
 import Answer from '../models/answerModel.js';
+import {mongoose} from 'mongoose';
 
 export const postAnswer = async (req, res) => {
   const { content } = req.body;
@@ -20,12 +20,37 @@ export const postAnswer = async (req, res) => {
   }
 };
 
+
+
+
+export const getAnswersByUser = async (req, res) => {
+  const { userId } = req.params;
+
+  // Validatation of  ObjectId
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ message: "Invalid user ID" });
+  }
+
+  try {
+    const answers = await Answer.find({ answeredBy: userId })
+      .populate("question", "title")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(answers);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching user's answers", error: err.message });
+  }
+};
+
+
+
+// Getting answers
 export const getAnswers = async (req, res) => {
   const { questionId } = req.params;
 
   try {
     const answers = await Answer.find({ question: questionId })
-      .populate('answeredBy', 'name email')
+      .populate('answeredBy', 'name email avatar')
       .sort({ createdAt: -1 });
 
     res.status(200).json(answers);
@@ -34,7 +59,8 @@ export const getAnswers = async (req, res) => {
   }
 };
 
-// ✏️ Update an answer
+
+//  Update an answer
 export const updateAnswer = async (req, res) => {
   const { id } = req.params;
   const { content } = req.body;
@@ -62,7 +88,7 @@ export const updateAnswer = async (req, res) => {
   }
 };
 
-// 🗑️ Delete an answer
+// Delete an answer
 export const deleteAnswer = async (req, res) => {
   const { id } = req.params;
 

@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
+import "./config/cloudinary.js";
 
 import express from "express";
 import { connectDB } from "./config/db.js";
@@ -10,10 +11,6 @@ import userRoutes from './routes/userRoutes.js';
 import questionRoutes from './routes/questionRoutes.js';
 import answerRoutes from './routes/answerRoutes.js';
 
-
-import { ExpressError } from "./utils/ExpressError.js";
-import { wrapAsync } from "./utils/wrapAsync.js";
-
 const app = express();
 const port = process.env.PORT ;
 connectDB();
@@ -22,7 +19,7 @@ connectDB();
 app.use(cors({
     origin: process.env.CLIENT_URL,
     credentials: true,
-    secure:false //development 
+    secure:true  
   }));
   
 app.use(express.json());

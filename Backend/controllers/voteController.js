@@ -1,4 +1,3 @@
-// controllers/voteController.js
 import { Question } from "../models/questionModel.js";
 import  Answer  from "../models/answerModel.js";
 
@@ -18,7 +17,6 @@ export const voteOnQuestion = async (req, res) => {
     question.votes.set(userId, vote); // Update the vote
     await question.save();
 
-    // Re-fetch to calculate virtuals
     const updated = await Question.findById(questionId);
 
     res.status(200).json({

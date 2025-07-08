@@ -3,6 +3,23 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 
+import {
+  Container,
+  Typography,
+  Box,
+  TextField,
+  Button,
+  IconButton,
+  Divider,
+  Card,
+  CardContent,
+  Stack,
+  Avatar,
+} from "@mui/material";
+
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
+import ThumbDownIcon from "@mui/icons-material/ThumbDown";
+
 const QuestionDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -39,7 +56,6 @@ const QuestionDetails = () => {
       setAnswers([res.data, ...answers]);
       setNewAnswer("");
     } catch (err) {
-      console.error("Failed to submit answer:", err);
       alert(err.response?.data?.message || "Error posting answer");
     }
   };
@@ -78,8 +94,7 @@ const QuestionDetails = () => {
   };
 
   const handleDeleteAnswer = async (answerId) => {
-    const confirm = window.confirm("Are you sure you want to delete this answer?");
-    if (!confirm) return;
+    if (!window.confirm("Are you sure you want to delete this answer?")) return;
 
     try {
       await api.delete(`/answers/${answerId}`);
@@ -89,103 +104,196 @@ const QuestionDetails = () => {
     }
   };
 
+  const handleDeleteQuestion = async () => {
+    if (!window.confirm("Are you sure you want to delete this question?")) return;
+
+    try {
+      await api.delete(`/questions/${question._id}`);
+      alert("Question deleted");
+      navigate("/questions");
+    } catch (err) {
+      alert(err.response?.data?.message || "Error deleting question");
+    }
+  };
+
   return (
-    <div style={{ padding: "20px" }}>
+    <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
       {question ? (
         <>
-          <h2>{question.title}</h2>
-          <p>{question.description}</p>
-          <p><strong>Asked by:</strong> {question.askedBy?.name || "Anonymous"}</p>
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{
+              fontSize: {
+                xs: "1.4rem",
+                sm: "1.8rem",
+                md: "2rem",
+              },
+              fontWeight: "bold",
+            }}
+          >
+            {question.title}
+          </Typography>
+
+          <Typography
+            variant="body1"
+            sx={{
+              whiteSpace: "pre-wrap",
+              fontSize: {
+                xs: "0.95rem",
+                sm: "1rem",
+                md: "1.15rem",
+              },
+              mb: 1,
+            }}
+          >
+            {question.description}
+          </Typography>
+
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+            <Avatar
+              src={question.askedBy?.avatar}
+              alt={question.askedBy?.name || "A"}
+              sx={{ width: 30, height: 30 }}
+            />
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ fontSize: { xs: "0.75rem", sm: "0.8rem" } }}
+            >
+              Asked by: {question.askedBy?.name || "Anonymous"}
+            </Typography>
+          </Box>
 
           {user && question.askedBy?._id === user._id && (
-            <div style={{ marginTop: "1rem" }}>
-              <button onClick={() => navigate(`/questions/edit/${question._id}`)}>Edit</button>
-              <button
-                onClick={async () => {
-                  const confirm = window.confirm("Are you sure you want to delete this question?");
-                  if (confirm) {
-                    try {
-                      await api.delete(`/questions/${question._id}`);
-                      alert("Question deleted");
-                      navigate("/questions");
-                    } catch (err) {
-                      alert(err.response?.data?.message || "Error deleting question");
-                    }
-                  }
-                }}
-                style={{ marginLeft: "1rem" }}
-              >
+            <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+              <Button variant="outlined" onClick={() => navigate(`/questions/edit/${question._id}`)}>
+                Edit
+              </Button>
+              <Button variant="outlined" color="error" onClick={handleDeleteQuestion}>
                 Delete
-              </button>
-            </div>
+              </Button>
+            </Box>
           )}
 
-          <hr />
-          <h3>Answers</h3>
+          <Divider sx={{ my: 3 }} />
+
+          <Typography
+            variant="h5"
+            gutterBottom
+            sx={{
+              fontSize: { xs: "1.1rem", sm: "1.3rem", md: "1.5rem" },
+              fontWeight: 600,
+            }}
+          >
+            Answers
+          </Typography>
 
           {answers.length === 0 ? (
-            <p>No answers yet. Be the first to answer!</p>
+            <Typography sx={{ fontSize: { xs: "0.9rem", sm: "1rem" } }}>
+              No answers yet. Be the first to answer!
+            </Typography>
           ) : (
-            answers.map((a) => (
-              <div key={a._id} style={{ marginBottom: "1rem", borderBottom: "1px solid #ccc", paddingBottom: "1rem" }}>
-                {editingAnswerId === a._id ? (
-                  <>
-                    <textarea
-                      value={editedContent}
-                      onChange={(e) => setEditedContent(e.target.value)}
-                      rows="3"
-                      style={{ width: "100%" }}
-                    />
-                    <button onClick={() => handleUpdateAnswer(a._id)}>Save</button>
-                    <button onClick={() => setEditingAnswerId(null)}>Cancel</button>
-                  </>
-                ) : (
-                  <>
-                    <p>{a.content}</p>
-                    <p><strong>Answered by:</strong> {a.answeredBy?.name || "Anonymous"}</p>
+            <Stack spacing={3}>
+              {answers.map((a) => (
+                <Card key={a._id} sx={{ p: 2 }}>
+                  <CardContent>
+                    {editingAnswerId === a._id ? (
+                      <>
+                        <TextField
+                          multiline
+                          fullWidth
+                          rows={3}
+                          value={editedContent}
+                          onChange={(e) => setEditedContent(e.target.value)}
+                        />
+                        <Box sx={{ mt: 2, display: "flex", gap: 1 }}>
+                          <Button variant="contained" onClick={() => handleUpdateAnswer(a._id)}>
+                            Save
+                          </Button>
+                          <Button variant="outlined" onClick={() => setEditingAnswerId(null)}>
+                            Cancel
+                          </Button>
+                        </Box>
+                      </>
+                    ) : (
+                      <>
+                        <Typography sx={{ whiteSpace: "pre-wrap" }}>{a.content}</Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", mt: 1, gap: 1 }}>
+                          <Avatar
+                            src={a.answeredBy?.avatar}
+                            alt={a.answeredBy?.name || "A"}
+                            sx={{ width: 24, height: 24 }}
+                          />
+                          <Typography variant="caption" color="text.secondary">
+                            Answered by: {a.answeredBy?.name || "Anonymous"}
+                          </Typography>
+                        </Box>
 
-                    <div style={{ marginTop: "0.5rem" }}>
-                      <button onClick={() => handleAnswerVote(a._id, 1)}>👍</button>
-                      <span style={{ margin: "0 10px" }}>Upvotes: {a.upvotes || 0}</span>
-                      <button onClick={() => handleAnswerVote(a._id, -1)}>👎</button>
-                      <span style={{ marginLeft: "10px" }}>Downvotes: {a.downvotes || 0}</span>
-                    </div>
+                        <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                          <IconButton onClick={() => handleAnswerVote(a._id, 1)} color="primary">
+                            <ThumbUpIcon />
+                          </IconButton>
+                          <Typography variant="body2">Upvotes: {a.upvotes || 0}</Typography>
 
-                    {user && a.answeredBy?._id === user._id && (
-                      <div style={{ marginTop: "0.5rem" }}>
-                        <button onClick={() => handleEdit(a)} style={{ marginRight: "0.5rem" }}>Edit</button>
-                        <button onClick={() => handleDeleteAnswer(a._id)}>Delete</button>
-                      </div>
+                          <IconButton onClick={() => handleAnswerVote(a._id, -1)} color="error">
+                            <ThumbDownIcon />
+                          </IconButton>
+                          <Typography variant="body2">Downvotes: {a.downvotes || 0}</Typography>
+                        </Box>
+
+                        {user && a.answeredBy?._id === user._id && (
+                          <Box sx={{ mt: 1, display: "flex", gap: 1 }}>
+                            <Button size="small" onClick={() => handleEdit(a)}>
+                              Edit
+                            </Button>
+                            <Button size="small" color="error" onClick={() => handleDeleteAnswer(a._id)}>
+                              Delete
+                            </Button>
+                          </Box>
+                        )}
+                      </>
                     )}
-                  </>
-                )}
-              </div>
-            ))
+                  </CardContent>
+                </Card>
+              ))}
+            </Stack>
           )}
 
           {user && (
             <>
-              <hr />
-              <h4>Your Answer</h4>
+              <Divider sx={{ my: 4 }} />
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{
+                  fontSize: { xs: "1rem", sm: "1.2rem", md: "1.4rem" },
+                  fontWeight: 500,
+                }}
+              >
+                Your Answer
+              </Typography>
               <form onSubmit={handleAnswerSubmit}>
-                <textarea
-                  rows="4"
-                  style={{ width: "100%" }}
+                <TextField
+                  multiline
+                  rows={4}
+                  fullWidth
                   placeholder="Write your answer here..."
                   value={newAnswer}
                   onChange={(e) => setNewAnswer(e.target.value)}
                   required
                 />
-                <br />
-                <button type="submit">Submit Answer</button>
+                <Button type="submit" variant="contained" sx={{ mt: 2 }}>
+                  Submit Answer
+                </Button>
               </form>
             </>
           )}
         </>
       ) : (
-        <p>Loading question...</p>
+        <Typography>Loading question...</Typography>
       )}
-    </div>
+    </Container>
   );
 };
 

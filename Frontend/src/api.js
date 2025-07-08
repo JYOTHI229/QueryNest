@@ -1,10 +1,10 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api',           // proxy will handle this
-  withCredentials: true,     // for sending cookies
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
   headers: {
-    'Content-Type': 'application/json', 
+    'Content-Type': 'application/json',
   },
 });
 

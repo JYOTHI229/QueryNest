@@ -31,10 +31,19 @@ const allowedOrigins = [
 
 
 app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      "http://localhost:5173",
+      process.env.CLIENT_URL
+    ];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true, // ✅ this is critical
 }));
-
 
 // ✅ Middlewares
 app.use(express.json());

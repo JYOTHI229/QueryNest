@@ -2,16 +2,17 @@ import { User } from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-// Helpers
+// Token Generators
 const generateAccessToken = (userId) =>
   jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "15m" });
 
 const generateRefreshToken = (userId) =>
   jwt.sign({ id: userId }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
 
-// Register
+// Register Controller
 export const Register = async (req, res) => {
   const { name, email, password, username } = req.body;
+
   if (!name || !email || !password || !username) {
     return res.status(400).json({ message: "All fields are required" });
   }
@@ -27,16 +28,24 @@ export const Register = async (req, res) => {
       return res.status(400).json({ message: "Username already taken" });
     }
 
-    const user = await User.create({ name, email, password, username });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      username,
+    });
+
     res.status(201).json({ message: "Registered successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// Login
+// Login Controller
 export const Login = async (req, res) => {
   const { email, password } = req.body;
+
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
@@ -54,13 +63,13 @@ export const Login = async (req, res) => {
       .cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "Strict",
+        sameSite: "Lax",
         maxAge: 15 * 60 * 1000,
       })
       .cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "Strict",
+        sameSite: "Lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       })
       .status(200)
@@ -78,7 +87,7 @@ export const Login = async (req, res) => {
   }
 };
 
-// Refresh
+// Refresh Token Controller
 export const RefreshToken = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
   if (!refreshToken) return res.sendStatus(401);
@@ -87,14 +96,16 @@ export const RefreshToken = async (req, res) => {
     const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
     const user = await User.findById(payload.id);
 
-    if (!user || user.refreshToken !== refreshToken) return res.sendStatus(403);
+    if (!user || user.refreshToken !== refreshToken) {
+      return res.sendStatus(403);
+    }
 
     const newAccessToken = generateAccessToken(user._id);
 
     res.cookie("accessToken", newAccessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
+      sameSite: "Lax",
       maxAge: 15 * 60 * 1000,
     });
 
@@ -104,10 +115,10 @@ export const RefreshToken = async (req, res) => {
   }
 };
 
-// Logout
+// Logout Controller
 export const Logout = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
-  if (!refreshToken) return res.sendStatus(204);
+  if (!refreshToken) return res.sendStatus(204); // No Content
 
   try {
     const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
@@ -118,9 +129,10 @@ export const Logout = async (req, res) => {
       await user.save();
     }
 
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
-    res.json({ message: "Logged out successfully" });
+    res
+      .clearCookie("accessToken")
+      .clearCookie("refreshToken")
+      .json({ message: "Logged out successfully" });
   } catch {
     res.sendStatus(403);
   }

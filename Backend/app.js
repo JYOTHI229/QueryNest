@@ -15,13 +15,29 @@ import answerRoutes from './routes/answerRoutes.js';
 const app = express();
 const port = process.env.PORT || 8000;
 
+// Connect to MongoDB
 connectDB();
+
+// Define allowed origins for CORS
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.CLIENT_URL
+];
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL,
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
 }));
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -36,17 +52,19 @@ app.get("/api/hello", (req, res) => {
   res.json({ message: "Hello from backend with proxy!" });
 });
 
+// Root route
 app.get("/", (req, res) => {
   res.send("hello");
 });
 
-// Error Middleware
+// Error middleware
 app.use((err, req, res, next) => {
-  const { status = 500, message = "Something went wrong" } = err;
+  const status = err.status || 500;
+  const message = err.message || "Something went wrong";
   res.status(status).json({ error: message });
 });
 
-// Start Server
+// Start server
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`✅ Server running on port ${port}`);
 });

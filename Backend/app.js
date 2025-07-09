@@ -24,10 +24,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://querynest-1-02qk.onrender.com"
-];
+
 
 
 app.use(cors({

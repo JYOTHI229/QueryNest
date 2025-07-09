@@ -1,3 +1,4 @@
+// src/context/AuthContext.jsx
 import { createContext, useContext, useState, useEffect } from "react";
 import api from "../api";
 
@@ -6,26 +7,26 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(undefined); // undefined = loading, null = not logged in
 
-  // Auto-refresh access token on 401
+  // ⏱ Auto-refresh access token on 401 error
   api.interceptors.response.use(
-    res => res,
+    (res) => res,
     async (err) => {
       const originalRequest = err.config;
 
-      // Check if refresh token cookie exists
-      const hasRefreshToken = document.cookie.includes("refreshToken");
-
+      // Prevent infinite retry loop
       if (
         err.response?.status === 401 &&
-        !originalRequest._retry &&
-        hasRefreshToken
+        !originalRequest._retry
       ) {
         originalRequest._retry = true;
+
         try {
-          await api.post("/auth/refresh-token");
-          return api(originalRequest);
-        } catch {
-          setUser(null); // Refresh failed → logout user
+          const refreshRes = await api.post("/auth/refresh-token");
+          console.log("🔁 Token refreshed:", refreshRes.data.message);
+          return api(originalRequest); // retry original request
+        } catch (refreshErr) {
+          console.error("❌ Refresh failed");
+          setUser(null); // auto logout
         }
       }
 
@@ -33,7 +34,7 @@ export const AuthProvider = ({ children }) => {
     }
   );
 
-  // Register
+  // ✅ Register
   const register = async ({ name, email, password, username }) => {
     const res = await api.post("/auth/register", {
       name,
@@ -44,41 +45,37 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
-  // Login
+  // ✅ Login
   const login = async ({ email, password }) => {
     const res = await api.post("/auth/login", { email, password });
-    await getProfile(); // fetch full user info from /user/profile
+    await getProfile(); // fetch user after login
     return res.data;
   };
 
-  // Fetch profile
+  // ✅ Fetch user profile
   const getProfile = async () => {
     try {
       const res = await api.get("/user/profile");
       setUser(res.data);
-    } catch {
+    } catch (err) {
       setUser(null); // Not logged in
     }
   };
 
-  // Update profile
+  // ✅ Update profile
   const updateProfile = async (updatedData) => {
-    try {
-      const res = await api.put("/user/update", updatedData);
-      setUser(res.data.user);
-      return res.data;
-    } catch (err) {
-      throw err.response?.data || err;
-    }
+    const res = await api.put("/user/update", updatedData);
+    setUser(res.data.user);
+    return res.data;
   };
 
-  // Logout
+  // ✅ Logout
   const logout = async () => {
     await api.post("/auth/logout");
     setUser(null);
   };
 
-  // Load user on mount
+  // ✅ Load user on first mount
   useEffect(() => {
     getProfile();
   }, []);

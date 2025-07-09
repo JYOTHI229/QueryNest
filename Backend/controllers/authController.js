@@ -87,21 +87,22 @@ export const Login = async (req, res) => {
   }
 };
 
-// Refresh Token Controller
 export const RefreshToken = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
+  console.log("🔐 Received refreshToken:", refreshToken);
   if (!refreshToken) return res.sendStatus(401);
 
   try {
     const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
     const user = await User.findById(payload.id);
+    console.log("👤 Found user:", user?.email);
 
     if (!user || user.refreshToken !== refreshToken) {
+      console.log("❌ Refresh token mismatch");
       return res.sendStatus(403);
     }
 
     const newAccessToken = generateAccessToken(user._id);
-
     res.cookie("accessToken", newAccessToken, {
       httpOnly: true,
       secure: true,
@@ -109,8 +110,10 @@ export const RefreshToken = async (req, res) => {
       maxAge: 15 * 60 * 1000,
     });
 
+    console.log("✅ Access token refreshed");
     res.json({ message: "Access token refreshed" });
-  } catch {
+  } catch (err) {
+    console.error("❌ Refresh error:", err.message);
     res.sendStatus(403);
   }
 };

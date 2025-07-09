@@ -26,7 +26,6 @@ app.use((req, res, next) => {
 
 
 
-
 const allowedOrigins = [process.env.CLIENT_URL, "http://localhost:5173"];
 
 app.use(cors({
@@ -34,11 +33,14 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS: " + origin));
+      console.log("❌ Blocked by CORS:", origin);
+      callback(new Error("Not allowed by CORS"));
     }
   },
-  credentials: true,
+  credentials: true
 }));
+
+
 
 // ✅ Middlewares
 app.use(express.json());

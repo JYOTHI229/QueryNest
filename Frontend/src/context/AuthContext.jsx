@@ -6,13 +6,20 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(undefined); // undefined = loading, null = not logged in
 
-  // ⏱ Auto-refresh access token on 401
+  // Auto-refresh access token on 401
   api.interceptors.response.use(
     res => res,
     async (err) => {
       const originalRequest = err.config;
 
-      if (err.response?.status === 401 && !originalRequest._retry) {
+      // Check if refresh token cookie exists
+      const hasRefreshToken = document.cookie.includes("refreshToken");
+
+      if (
+        err.response?.status === 401 &&
+        !originalRequest._retry &&
+        hasRefreshToken
+      ) {
         originalRequest._retry = true;
         try {
           await api.post("/auth/refresh-token");
@@ -26,20 +33,25 @@ export const AuthProvider = ({ children }) => {
     }
   );
 
-  // 📥 REGISTER
+  // Register
   const register = async ({ name, email, password, username }) => {
-    const res = await api.post("/auth/register", { name, email, password, username });
+    const res = await api.post("/auth/register", {
+      name,
+      email,
+      password,
+      username,
+    });
     return res.data;
   };
 
-  // 🔐 LOGIN
+  // Login
   const login = async ({ email, password }) => {
     const res = await api.post("/auth/login", { email, password });
     await getProfile(); // fetch full user info from /user/profile
     return res.data;
   };
 
-  // ✅ FETCH PROFILE
+  // Fetch profile
   const getProfile = async () => {
     try {
       const res = await api.get("/user/profile");
@@ -49,7 +61,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 🧾 UPDATE PROFILE
+  // Update profile
   const updateProfile = async (updatedData) => {
     try {
       const res = await api.put("/user/update", updatedData);
@@ -60,13 +72,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 🚪 LOGOUT
+  // Logout
   const logout = async () => {
     await api.post("/auth/logout");
     setUser(null);
   };
 
-  // 🔄 Load user on mount
+  // Load user on mount
   useEffect(() => {
     getProfile();
   }, []);

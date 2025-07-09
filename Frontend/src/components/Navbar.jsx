@@ -121,19 +121,17 @@ const Navbar = () => {
                 <MenuIcon />
               </IconButton>
               <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-                <MenuItem onClick={() => { navigate("/"); handleMenuClose(); }}>Home</MenuItem>
-                {user ? (
-                  <>
-                    <MenuItem onClick={() => { navigate("/profile"); handleMenuClose(); }}>Profile</MenuItem>
-                    <MenuItem onClick={() => { navigate("/ask"); handleMenuClose(); }}>Ask</MenuItem>
-                    <MenuItem onClick={handleLogout}>Logout</MenuItem>
-                  </>
-                ) : (
-                  <>
-                    <MenuItem onClick={() => { navigate("/login"); handleMenuClose(); }}>Login</MenuItem>
-                    <MenuItem onClick={() => { navigate("/register"); handleMenuClose(); }}>Register</MenuItem>
-                  </>
-                )}
+                {[
+                  <MenuItem key="home" onClick={() => { navigate("/"); handleMenuClose(); }}>Home</MenuItem>,
+                  ...(user ? [
+                    <MenuItem key="profile" onClick={() => { navigate("/profile"); handleMenuClose(); }}>Profile</MenuItem>,
+                    <MenuItem key="ask" onClick={() => { navigate("/ask"); handleMenuClose(); }}>Ask</MenuItem>,
+                    <MenuItem key="logout" onClick={handleLogout}>Logout</MenuItem>,
+                  ] : [
+                    <MenuItem key="login" onClick={() => { navigate("/login"); handleMenuClose(); }}>Login</MenuItem>,
+                    <MenuItem key="register" onClick={() => { navigate("/register"); handleMenuClose(); }}>Register</MenuItem>,
+                  ])
+                ]}
               </Menu>
             </>
           )}

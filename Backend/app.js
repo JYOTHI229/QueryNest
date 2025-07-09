@@ -24,22 +24,17 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ CORS Setup
 const allowedOrigins = [
   "http://localhost:5173",
-  process.env.CLIENT_URL,
+  "https://querynest-1-02qk.onrender.com"
 ];
 
+
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("❌ Not allowed by CORS: " + origin));
-    }
-  },
+  origin: allowedOrigins,
   credentials: true,
 }));
+
 
 // ✅ Middlewares
 app.use(express.json());
@@ -55,6 +50,11 @@ app.use('/api/answers', answerRoutes);
 app.get("/api/hello", (req, res) => {
   res.json({ message: "Hello from backend with proxy!" });
 });
+
+app.get("/api/check-cookies", (req, res) => {
+  res.json({ cookies: req.cookies });
+});
+
 
 // ✅ Root route
 app.get("/", (req, res) => {

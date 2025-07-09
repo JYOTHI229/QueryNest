@@ -60,18 +60,18 @@ export const Login = async (req, res) => {
     await user.save();
 
     res
-      .cookie("accessToken", accessToken, {
-        httpOnly: true,
-        secure: true, // required for cross-site cookies
-        sameSite: "None", // required for secure cookies across domains
-        maxAge: 15 * 60 * 1000,
-      })
-      .cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "None",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      })
+       .cookie("accessToken", accessToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "None",
+            maxAge: 15 * 60 * 1000,
+        })
+       .cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "None",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        })
       .status(200)
       .json({
         message: "Logged in successfully",

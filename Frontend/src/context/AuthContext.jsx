@@ -6,25 +6,59 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(undefined); // undefined = loading, null = not logged in
 
-  // 🔁 Automatically refresh token on 401
-  api.interceptors.response.use(
-    (res) => res,
-    async (err) => {
-      const originalRequest = err.config;
+let isRefreshing = false;
+let failedQueue = [];
 
-      if (err.response?.status === 401 && !originalRequest._retry) {
-        originalRequest._retry = true;
-        try {
-          await api.post("/auth/refresh-token");
-          return api(originalRequest);
-        } catch {
-          setUser(null);
-        }
-      }
-
-      return Promise.reject(err);
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+    prom.resolve(token);
     }
-  );
+  });
+
+  failedQueue = [];
+};
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+  if (error.response?.status === 401 && !originalRequest._retry) {
+    if (isRefreshing) {
+       return new Promise(function (resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        })
+        .then(() => {
+        return api(originalRequest);  
+         })
+         .catch(err => {
+           return Promise.reject(err);
+          });
+        }
+       
+       originalRequest._retry = true;
+       isRefreshing = true;
+
+      try {
+       await api.post("/auth/refresh-token");
+         processQueue(null);
+         return api(originalRequest);
+       } catch (err) {
+       processQueue(err, null);
+       setUser(null);
+       return Promise.reject(err);
+       } finally {
+        isRefreshing = false;
+       }
+     }
+
+     return Promise.reject(error);
+ }
+);
+
 
   const register = async ({ name, email, password, username }) => {
     const res = await api.post("/auth/register", { name, email, password, username });
@@ -33,6 +67,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async ({ email, password }) => {
     const res = await api.post("/auth/login", { email, password });
+    console.log("Login response:", res.data);
     await getProfile();
     return res.data;
   };

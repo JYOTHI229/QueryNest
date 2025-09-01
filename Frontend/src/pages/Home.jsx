@@ -23,16 +23,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [questions, setQuestions] = useState([]);
   const [followedUsers, setFollowedUsers] = useState([]);
-  const [followStats, setFollowStats] = useState({});
-
-  const fetchFollowStats = async (userIds) => {
-    try {
-      const statsRes = await api.post("/user/follow-stats", { userIds });
-      setFollowStats(statsRes.data);
-    } catch (err) {
-      console.error("Error fetching follow stats:", err);
-    }
-  };
+  const [userCounts, setUserCounts] = useState({}); // cache for counts
 
   const fetchFollowedUsers = async () => {
     try {
@@ -43,17 +34,44 @@ const Home = () => {
     }
   };
 
+  const fetchUserCounts = async (userIds) => {
+    try {
+      const results = await Promise.all(
+        userIds.map(async (uid) => {
+          const res = await api.get(`/user/public/${uid}`);
+          return {
+            uid,
+            followers: res.data.followers?.length || 0,
+            following: res.data.following?.length || 0,
+          };
+        })
+      );
+
+      const countsMap = {};
+      results.forEach(({ uid, followers, following }) => {
+        countsMap[uid] = { followers, following };
+      });
+
+      setUserCounts((prev) => ({ ...prev, ...countsMap }));
+    } catch (err) {
+      console.error("Error fetching user counts:", err);
+    }
+  };
+
   const fetchQuestions = async () => {
     try {
       const res = await api.get("/questions/all");
       setQuestions(res.data);
 
-      const userIds = [...new Set(res.data.map((q) => q.askedBy?._id))];
-      await fetchFollowStats(userIds);
+      const uniqueUserIds = [...new Set(res.data.map((q) => q.askedBy?._id))];
+      await fetchUserCounts(uniqueUserIds);
 
       if (user) await fetchFollowedUsers();
     } catch (err) {
-      console.error("Error fetching questions:", err.response?.data || err.message);
+      console.error(
+        "Error fetching questions:",
+        err.response?.data || err.message
+      );
     }
   };
 
@@ -67,7 +85,9 @@ const Home = () => {
       const updated = res.data;
       setQuestions((prev) =>
         prev.map((q) =>
-          q._id === id ? { ...q, upvotes: updated.upvotes, downvotes: updated.downvotes } : q
+          q._id === id
+            ? { ...q, upvotes: updated.upvotes, downvotes: updated.downvotes }
+            : q
         )
       );
     } catch (err) {
@@ -83,24 +103,13 @@ const Home = () => {
       if (isFollowing) {
         await api.put(`/user/unfollow/${userId}`);
         setFollowedUsers((prev) => prev.filter((id) => id !== userId));
-        setFollowStats((prev) => ({
-          ...prev,
-          [userId]: {
-            ...prev[userId],
-            followers: (prev[userId]?.followers || 1) - 1,
-          },
-        }));
       } else {
         await api.put(`/user/follow/${userId}`);
         setFollowedUsers((prev) => [...prev, userId]);
-        setFollowStats((prev) => ({
-          ...prev,
-          [userId]: {
-            ...prev[userId],
-            followers: (prev[userId]?.followers || 0) + 1,
-          },
-        }));
       }
+
+      // refresh counts for that user
+      await fetchUserCounts([userId]);
     } catch (err) {
       console.error("Follow/unfollow error:", err);
     }
@@ -132,7 +141,10 @@ const Home = () => {
                 <Box display="flex" alignItems="center" gap={1}>
                   <Avatar
                     alt={q.askedBy?.name}
-                    src={q.askedBy?.avatar || "https://i.ibb.co/2d8L5F0/default-avatar.png"}
+                    src={
+                      q.askedBy?.avatar ||
+                      "https://i.ibb.co/2d8L5F0/default-avatar.png"
+                    }
                     sx={{ width: 36, height: 36, cursor: "pointer" }}
                     onClick={() => navigate(`/users/${q.askedBy?._id}`)}
                   />
@@ -140,14 +152,17 @@ const Home = () => {
                     <Typography
                       fontSize={14}
                       fontWeight={600}
-                      sx={{ cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
+                      sx={{
+                        cursor: "pointer",
+                        "&:hover": { textDecoration: "underline" },
+                      }}
                       onClick={() => navigate(`/users/${q.askedBy?._id}`)}
                     >
                       {q.askedBy?.name || "Anonymous"}
                     </Typography>
                     <Typography fontSize={11} color="text.secondary">
-                      {followStats[q.askedBy?._id]?.followers ?? 0} Followers •{" "}
-                      {followStats[q.askedBy?._id]?.following ?? 0} Following
+                      {userCounts[q.askedBy?._id]?.followers ?? 0} Followers •{" "}
+                      {userCounts[q.askedBy?._id]?.following ?? 0} Following
                     </Typography>
                   </Box>
                 </Box>
@@ -156,7 +171,9 @@ const Home = () => {
                   <Button
                     size="small"
                     variant={
-                      followedUsers.includes(q.askedBy._id) ? "outlined" : "contained"
+                      followedUsers.includes(q.askedBy._id)
+                        ? "outlined"
+                        : "contained"
                     }
                     onClick={() => toggleFollow(q.askedBy._id)}
                     sx={{
@@ -181,7 +198,9 @@ const Home = () => {
                       },
                     }}
                   >
-                    {followedUsers.includes(q.askedBy._id) ? "Following" : "Follow"}
+                    {followedUsers.includes(q.askedBy._id)
+                      ? "Following"
+                      : "Follow"}
                   </Button>
                 )}
               </Box>

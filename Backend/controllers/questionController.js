@@ -72,7 +72,7 @@ export const question = async (req, res) => {
 export const getAllQuestions = async (req, res) => {
   try {
     const questions = await Question.find()
-      .populate("askedBy", "name avatar")
+      .populate("askedBy", "name avatar _id followers following")
       .sort({ createdAt: -1 });
 
     res.status(200).json(questions);
@@ -165,4 +165,3 @@ export const getQuestionsByUser = async (req, res) => {
     });
   }
 };
-

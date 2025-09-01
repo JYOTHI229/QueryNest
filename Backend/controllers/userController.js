@@ -8,8 +8,8 @@ export const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.userId)
       .select("-password")
-      .populate("followers", "name _id")
-      .populate("following", "name _id");
+      .populate("followers", "name username avatar _id")
+      .populate("following", "name username avatar _id");
 
     res.status(200).json(user);
   } catch (err) {
@@ -181,4 +181,3 @@ export const getFollowStats = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
-

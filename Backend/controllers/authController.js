@@ -1,6 +1,8 @@
 import { User } from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import { sendEmail } from "../utils/sendEmail.js";
 
 // Token Generators
 const generateAccessToken = (userId) =>
@@ -137,5 +139,67 @@ export const Logout = async (req, res) => {
       .json({ message: "Logged out successfully" });
   } catch {
     res.sendStatus(403);
+  }
+};
+
+export const ForgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      // Respond generically to prevent email enumeration
+      return res.status(200).json({
+        message: "If that email exists, a reset link has been sent",
+      });
+    }
+
+    // Generate reset token
+    const token = crypto.randomBytes(32).toString("hex");
+
+    // Save token and expiry in user document
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    // Send email with clickable reset button
+    await sendEmail(user.email, "QueryNest Password Reset", token);
+
+    return res.status(200).json({
+      message: "If that email exists, a reset link has been sent",
+    });
+  } catch (err) {
+    console.error("❌ ForgotPassword error:", err);
+    return res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+// Reset Password
+export const ResetPassword = async (req, res) => {
+  const { token } = req.params;
+  const { newPassword } = req.body;
+
+  try {
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired reset token" });
+    }
+
+    // Save raw password — pre-save hook will hash it
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+
+    await user.save();
+
+    res.status(200).json({ message: "Password has been reset successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Something went wrong" });
   }
 };

@@ -44,7 +44,12 @@ const Login = () => {
         <Typography variant="h4" align="center" gutterBottom>
           QueryNest
         </Typography>
-        <Typography variant="subtitle1" align="center" color="text.secondary" gutterBottom>
+        <Typography
+          variant="subtitle1"
+          align="center"
+          color="text.secondary"
+          gutterBottom
+        >
           A place to share knowledge and better understand the world
         </Typography>
 
@@ -87,6 +92,13 @@ const Login = () => {
           </Stack>
         </Box>
 
+        {/* Forgot Password */}
+        <Typography variant="body2" align="right" sx={{ mt: 1 }}>
+          <Link to="/forgot-password" style={{ textDecoration: "none", color: "#1976d2" }}>
+            Forgot Password?
+          </Link>
+        </Typography>
+
         <Typography variant="body2" align="center" sx={{ mt: 2 }}>
           Don’t have an account?{" "}
           <Link to="/register" style={{ textDecoration: "none", color: "#1976d2" }}>
@@ -98,4 +110,4 @@ const Login = () => {
   );
 };
 
-export default Login;  
+export default Login;

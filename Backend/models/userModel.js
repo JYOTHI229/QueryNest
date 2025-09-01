@@ -16,7 +16,10 @@ const userSchema = new mongoose.Schema({
     message: String,
     read: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now }
-  }]
+  }],
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date }
+  
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
@@ -27,3 +30,5 @@ userSchema.pre('save', async function (next) {
 });
 
 export const User = mongoose.model("User", userSchema);
+
+

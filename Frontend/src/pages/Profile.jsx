@@ -23,23 +23,27 @@ import UserAnswers from "../components/UserAnswers";
 const Profile = () => {
   const [user, setUser] = useState(null);
   const [authUser, setAuthUser] = useState(null);
-  const [followersList, setFollowersList] = useState([]);
-  const [followingList, setFollowingList] = useState([]);
   const navigate = useNavigate();
   const { id } = useParams();
   const isOwnProfile = !id;
 
   useEffect(() => {
     const fetchData = async () => {
-      const profileRes = await api.get(isOwnProfile ? "/user/profile" : `/user/public/${id}`);
-      setUser(profileRes.data);
+      try {
+        // fetch the profile being viewed (own or public)
+        const profileRes = await api.get(isOwnProfile ? "/user/profile" : `/user/public/${id}`);
+        setUser(profileRes.data);
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+      }
 
-      const followersRes = await api.get(`/user/public/${isOwnProfile ? profileRes.data._id : id}`);
-      setFollowersList(followersRes.data.followers || []);
-      setFollowingList(followersRes.data.following || []);
-
-      const authRes = await api.get("/user/profile");
-      setAuthUser(authRes.data);
+      // try to fetch the logged-in user's profile — if unauthorized, treat as guest
+      try {
+        const authRes = await api.get("/user/profile");
+        setAuthUser(authRes.data);
+      } catch {
+        setAuthUser(null);
+      }
     };
 
     fetchData();
@@ -54,27 +58,32 @@ const Profile = () => {
 
   const handleFollow = async (targetId) => {
     await api.put(`/user/follow/${targetId}`);
-    refreshProfile();
+    await refreshProfile();
   };
 
   const handleUnfollow = async (targetId) => {
     await api.put(`/user/unfollow/${targetId}`);
-    refreshProfile();
+    await refreshProfile();
   };
 
   const refreshProfile = async () => {
-    const profileRes = await api.get(isOwnProfile ? "/user/profile" : `/user/public/${id}`);
-    setUser(profileRes.data);
+    try {
+      const profileRes = await api.get(isOwnProfile ? "/user/profile" : `/user/public/${id}`);
+      setUser(profileRes.data);
+    } catch (err) {
+      console.error("Error refreshing profile:", err);
+    }
 
-    const followersRes = await api.get(`/user/public/${isOwnProfile ? profileRes.data._id : id}`);
-    setFollowersList(followersRes.data.followers || []);
-    setFollowingList(followersRes.data.following || []);
-
-    const authRes = await api.get("/user/profile");
-    setAuthUser(authRes.data);
+    try {
+      const authRes = await api.get("/user/profile");
+      setAuthUser(authRes.data);
+    } catch {
+      setAuthUser(null);
+    }
   };
 
-  if (!user || !authUser) {
+  // show loader only if we haven't loaded the profile object (guests will skip auth)
+  if (!user) {
     return (
       <Container maxWidth="md" sx={{ py: 8, textAlign: "center" }}>
         <CircularProgress />
@@ -82,22 +91,44 @@ const Profile = () => {
     );
   }
 
-  const isFollowing = authUser.following?.some((id) => id === user._id || id._id === user._id);
+  // determine if the logged-in user is following the viewed user
+  const isFollowing = !!(
+    authUser &&
+    authUser.following?.some((f) => f === user._id || f._id === user._id)
+  );
 
   const renderUserRow = (person) => {
-    const isFollowingPerson = authUser.following?.some((f) => f === person._id || f._id === person._id);
+    const isFollowingPerson = !!(
+      authUser &&
+      authUser.following?.some((f) => f === person._id || f._id === person._id)
+    );
 
     return (
-      <Stack key={person._id} direction="row" alignItems="center" justifyContent="space-between" spacing={2} mb={1}>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ cursor: "pointer" }} onClick={() => navigate(`/profile/${person._id}`)}>
+      <Stack
+        key={person._id}
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        spacing={2}
+        mb={1}
+      >
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          sx={{ cursor: "pointer" }}
+          onClick={() => navigate(`/profile/${person._id}`)}
+        >
           <Avatar src={person.avatar} sx={{ width: 32, height: 32 }} />
           <Stack>
             <Typography fontSize="0.9rem">{person.name}</Typography>
-            <Typography fontSize="0.75rem" color="text.secondary">@{person.username}</Typography>
+            <Typography fontSize="0.75rem" color="text.secondary">
+              @{person.username}
+            </Typography>
           </Stack>
         </Stack>
 
-        {authUser._id !== person._id && (
+        {authUser && authUser._id !== person._id && (
           isFollowingPerson ? (
             <Button size="small" variant="outlined" onClick={() => handleUnfollow(person._id)}>
               Following
@@ -128,22 +159,39 @@ const Profile = () => {
           <Avatar src={user.avatar} sx={{ width: 56, height: 56 }} />
 
           <Stack spacing={0.5}>
-            <Typography fontSize="0.95rem" fontWeight={600}>{user.name}</Typography>
-            <Typography fontSize="0.8rem" color="text.secondary">@{user.username}</Typography>
+            <Typography fontSize="0.95rem" fontWeight={600}>
+              {user.name}
+            </Typography>
+            <Typography fontSize="0.8rem" color="text.secondary">
+              @{user.username}
+            </Typography>
 
             <Stack direction="row" spacing={2}>
-              <Typography fontSize="0.8rem"><strong>{followersList.length}</strong> Followers</Typography>
-              <Typography fontSize="0.8rem"><strong>{followingList.length}</strong> Following</Typography>
+              <Typography fontSize="0.8rem">
+                <strong>{user.followers?.length || 0}</strong> Followers
+              </Typography>
+              <Typography fontSize="0.8rem">
+                <strong>{user.following?.length || 0}</strong> Following
+              </Typography>
             </Stack>
           </Stack>
 
-          {isOwnProfile ? (
-            <Button size="small" variant="outlined" onClick={() => navigate("/update-profile")}>Edit</Button>
-          ) : isFollowing ? (
-            <Button size="small" variant="outlined" onClick={() => handleUnfollow(user._id)}>Following</Button>
-          ) : (
-            <Button size="small" variant="contained" onClick={() => handleFollow(user._id)}>Follow</Button>
-          )}
+          {/* show Edit only for the logged-in owner; otherwise show Follow/Following only when logged-in */}
+          {authUser && authUser._id === user._id ? (
+            <Button size="small" variant="outlined" onClick={() => navigate("/update-profile")}>
+              Edit
+            </Button>
+          ) : authUser ? (
+            isFollowing ? (
+              <Button size="small" variant="outlined" onClick={() => handleUnfollow(user._id)}>
+                Following
+              </Button>
+            ) : (
+              <Button size="small" variant="contained" onClick={() => handleFollow(user._id)}>
+                Follow
+              </Button>
+            )
+          ) : null}
         </Stack>
       </Box>
 
@@ -171,8 +219,8 @@ const Profile = () => {
             <Typography fontWeight={600}>Followers</Typography>
           </AccordionSummary>
           <AccordionDetails>
-            {followersList.length > 0 ? (
-              followersList.map((f) => renderUserRow(f))
+            {user.followers?.length > 0 ? (
+              user.followers.map((f) => renderUserRow(f))
             ) : (
               <Typography>No followers yet.</Typography>
             )}
@@ -184,8 +232,8 @@ const Profile = () => {
             <Typography fontWeight={600}>Following</Typography>
           </AccordionSummary>
           <AccordionDetails>
-            {followingList.length > 0 ? (
-              followingList.map((f) => renderUserRow(f))
+            {user.following?.length > 0 ? (
+              user.following.map((f) => renderUserRow(f))
             ) : (
               <Typography>No following yet.</Typography>
             )}

@@ -12,6 +12,8 @@ import QuestionDetails from "./pages/QuestionDetails";
 import MyQuestions from "./pages/MyQuestions";
 import EditQuestion from "./pages/EditQuestion";
 import SearchResults from "./pages/SearchResults";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import "./App.css";
 
 function App() {
@@ -58,6 +60,9 @@ function App() {
               <EditQuestion />
             </PrivateRoute>
           }/>
+
+         <Route path="/forgot-password" element={<ForgotPassword />} />
+         <Route path="/reset-password/:token" element={<ResetPassword />} />
         </Routes>
       </Layout>
     </Router>

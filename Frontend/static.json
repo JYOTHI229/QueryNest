@@ -1,9 +1,8 @@
 {
-    "rewrites": [
-      { "source": "/reset-password/*", "destination": "/index.html" },
-      { "source": "/login", "destination": "/index.html" },
-      { "source": "/signup", "destination": "/index.html" },
-      { "source": "/profile/*", "destination": "/index.html" }
-    ]
+    "root": "dist",
+    "clean_urls": true,
+    "routes": {
+      "/**": "index.html"
+    }
   }
   

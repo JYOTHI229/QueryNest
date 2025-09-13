@@ -1,4 +1,3 @@
-
 import dotenv from "dotenv";
 dotenv.config();    
 
@@ -38,8 +37,6 @@ app.use((req, res, next) => {
   next();
 });
 
-
-
 const allowedOrigins = [process.env.CLIENT_URL ,  "http://localhost:5173"];
 
 app.use(cors({
@@ -55,19 +52,17 @@ app.use(cors({
   credentials: true
 }));
 
-
-
-//  Middlewares
+// Middlewares
 app.use(express.json());
 app.use(cookieParser());
 
-//  API Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/questions', questionRoutes);
 app.use('/api/answers', answerRoutes);
 
-//  Test Route
+// Test Route
 app.get("/api/hello", (req, res) => {
   res.json({ message: "Hello from backend with proxy!" });
 });
@@ -76,15 +71,20 @@ app.get("/api/check-cookies", (req, res) => {
   res.json({ cookies: req.cookies });
 });
 
+// Serve frontend static files
+app.use(express.static(path.join(__dirname, "../Frontend/dist")));
 
-//  Root route
+// Handle SPA routes (React Router)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../Frontend/dist/index.html"));
+});
+
+// Root route (optional, still works)
 app.get("/", (req, res) => {
   res.send("QueryNest backend running!");
 });
 
-
-
-//  Error middleware
+// Error middleware
 app.use((err, req, res, next) => {
   const status = err.status || 500;
   const message = err.message || "Something went wrong";
@@ -92,7 +92,7 @@ app.use((err, req, res, next) => {
   res.status(status).json({ error: message });
 });
 
-//  Start server
+// Start server
 app.listen(port, () => {
   console.log(` Server running on port ${port}`);
   console.log(` CLIENT_URL: ${process.env.CLIENT_URL}`);

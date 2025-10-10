@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
-
 import {
   Container,
   Typography,
@@ -15,10 +14,12 @@ import {
   CardContent,
   Stack,
   Avatar,
+  CircularProgress,
+  Paper,
 } from "@mui/material";
-
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
+import SmartToyIcon from "@mui/icons-material/SmartToy"; // AI icon
 
 const QuestionDetails = () => {
   const { id } = useParams();
@@ -27,7 +28,9 @@ const QuestionDetails = () => {
 
   const [question, setQuestion] = useState(null);
   const [answers, setAnswers] = useState([]);
+  const [aiAnswer, setAiAnswer] = useState(null);
   const [newAnswer, setNewAnswer] = useState("");
+  const [loading, setLoading] = useState(true);
   const [editingAnswerId, setEditingAnswerId] = useState(null);
   const [editedContent, setEditedContent] = useState("");
 
@@ -38,9 +41,18 @@ const QuestionDetails = () => {
         setQuestion(resQ.data);
 
         const resA = await api.get(`/answers/${id}`);
-        setAnswers(resA.data);
+        const allAnswers = resA.data;
+
+        // Separate AI answer if exists
+        const ai = allAnswers.find((a) => a.isAI);
+        const userAnswers = allAnswers.filter((a) => !a.isAI);
+
+        setAiAnswer(ai || null);
+        setAnswers(userAnswers);
       } catch (err) {
         console.error("Error loading question or answers:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -53,7 +65,7 @@ const QuestionDetails = () => {
 
     try {
       const res = await api.post(`/answers/${id}`, { content: newAnswer });
-      setAnswers([res.data, ...answers]);
+      setAnswers((prev) => [res.data, ...prev]);
       setNewAnswer("");
     } catch (err) {
       alert(err.response?.data?.message || "Error posting answer");
@@ -65,11 +77,17 @@ const QuestionDetails = () => {
       const res = await api.post(`/answers/vote/${answerId}`, { vote: voteValue });
       const { upvotes, downvotes } = res.data;
 
+      // Update user answers
       setAnswers((prev) =>
         prev.map((a) =>
           a._id === answerId ? { ...a, upvotes, downvotes } : a
         )
       );
+
+      // Update AI answer if it matches
+      if (aiAnswer?._id === answerId) {
+        setAiAnswer((prev) => ({ ...prev, upvotes, downvotes }));
+      }
     } catch (err) {
       alert(err.response?.data?.message || "Login required to vote");
     }
@@ -95,7 +113,6 @@ const QuestionDetails = () => {
 
   const handleDeleteAnswer = async (answerId) => {
     if (!window.confirm("Are you sure you want to delete this answer?")) return;
-
     try {
       await api.delete(`/answers/${answerId}`);
       setAnswers((prev) => prev.filter((a) => a._id !== answerId));
@@ -104,49 +121,23 @@ const QuestionDetails = () => {
     }
   };
 
-  const handleDeleteQuestion = async () => {
-    if (!window.confirm("Are you sure you want to delete this question?")) return;
-
-    try {
-      await api.delete(`/questions/${question._id}`);
-      alert("Question deleted");
-      navigate("/questions");
-    } catch (err) {
-      alert(err.response?.data?.message || "Error deleting question");
-    }
-  };
+  if (loading) {
+    return (
+      <Container sx={{ textAlign: "center", mt: 10 }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
       {question ? (
         <>
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{
-              fontSize: {
-                xs: "1.4rem",
-                sm: "1.8rem",
-                md: "2rem",
-              },
-              fontWeight: "bold",
-            }}
-          >
+          <Typography variant="h4" gutterBottom fontWeight="bold">
             {question.title}
           </Typography>
 
-          <Typography
-            variant="body1"
-            sx={{
-              whiteSpace: "pre-wrap",
-              fontSize: {
-                xs: "0.95rem",
-                sm: "1rem",
-                md: "1.15rem",
-              },
-              mb: 1,
-            }}
-          >
+          <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", mb: 2 }}>
             {question.description}
           </Typography>
 
@@ -156,43 +147,65 @@ const QuestionDetails = () => {
               alt={question.askedBy?.name || "A"}
               sx={{ width: 30, height: 30 }}
             />
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ fontSize: { xs: "0.75rem", sm: "0.8rem" } }}
-            >
+            <Typography variant="caption" color="text.secondary">
               Asked by: {question.askedBy?.name || "Anonymous"}
             </Typography>
           </Box>
 
-          {user && question.askedBy?._id === user._id && (
-            <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-              <Button variant="outlined" onClick={() => navigate(`/questions/edit/${question._id}`)}>
-                Edit
-              </Button>
-              <Button variant="outlined" color="error" onClick={handleDeleteQuestion}>
-                Delete
-              </Button>
-            </Box>
-          )}
-
           <Divider sx={{ my: 3 }} />
 
-          <Typography
-            variant="h5"
-            gutterBottom
-            sx={{
-              fontSize: { xs: "1.1rem", sm: "1.3rem", md: "1.5rem" },
-              fontWeight: 600,
-            }}
-          >
-            Answers
+          {/* --- AI Answer Section with Voting --- */}
+          {aiAnswer && (
+            <Paper
+              elevation={4}
+              sx={{
+                p: 3,
+                mb: 4,
+                borderRadius: 3,
+                background:
+                  "linear-gradient(135deg, rgba(25,118,210,0.1), rgba(25,118,210,0.05))",
+              }}
+            >
+              <Box display="flex" alignItems="center" gap={1} mb={1}>
+                <SmartToyIcon color="primary" />
+                <Typography variant="h6" fontWeight={600}>
+                  AI Answer (QueryNest AI)
+                </Typography>
+              </Box>
+              <Typography sx={{ whiteSpace: "pre-wrap" }}>
+                {aiAnswer.content}
+              </Typography>
+
+              {/* Voting Buttons */}
+              <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                <IconButton
+                  onClick={() => handleAnswerVote(aiAnswer._id, 1)}
+                  color="primary"
+                >
+                  <ThumbUpIcon />
+                </IconButton>
+                <Typography variant="body2">Upvotes: {aiAnswer.upvotes || 0}</Typography>
+
+                <IconButton
+                  onClick={() => handleAnswerVote(aiAnswer._id, -1)}
+                  color="error"
+                >
+                  <ThumbDownIcon />
+                </IconButton>
+                <Typography variant="body2">
+                  Downvotes: {aiAnswer.downvotes || 0}
+                </Typography>
+              </Box>
+            </Paper>
+          )}
+
+          {/* --- User Answers --- */}
+          <Typography variant="h5" gutterBottom fontWeight="bold">
+            Answers from the Community
           </Typography>
 
           {answers.length === 0 ? (
-            <Typography sx={{ fontSize: { xs: "0.9rem", sm: "1rem" } }}>
-              No answers yet. Be the first to answer!
-            </Typography>
+            <Typography>No user answers yet.</Typography>
           ) : (
             <Stack spacing={3}>
               {answers.map((a) => (
@@ -208,18 +221,33 @@ const QuestionDetails = () => {
                           onChange={(e) => setEditedContent(e.target.value)}
                         />
                         <Box sx={{ mt: 2, display: "flex", gap: 1 }}>
-                          <Button variant="contained" onClick={() => handleUpdateAnswer(a._id)}>
+                          <Button
+                            variant="contained"
+                            onClick={() => handleUpdateAnswer(a._id)}
+                          >
                             Save
                           </Button>
-                          <Button variant="outlined" onClick={() => setEditingAnswerId(null)}>
+                          <Button
+                            variant="outlined"
+                            onClick={() => setEditingAnswerId(null)}
+                          >
                             Cancel
                           </Button>
                         </Box>
                       </>
                     ) : (
                       <>
-                        <Typography sx={{ whiteSpace: "pre-wrap" }}>{a.content}</Typography>
-                        <Box sx={{ display: "flex", alignItems: "center", mt: 1, gap: 1 }}>
+                        <Typography sx={{ whiteSpace: "pre-wrap" }}>
+                          {a.content}
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            mt: 1,
+                            gap: 1,
+                          }}
+                        >
                           <Avatar
                             src={a.answeredBy?.avatar}
                             alt={a.answeredBy?.name || "A"}
@@ -230,24 +258,48 @@ const QuestionDetails = () => {
                           </Typography>
                         </Box>
 
-                        <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}>
-                          <IconButton onClick={() => handleAnswerVote(a._id, 1)} color="primary">
+                        <Box
+                          sx={{
+                            mt: 2,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                          }}
+                        >
+                          <IconButton
+                            onClick={() => handleAnswerVote(a._id, 1)}
+                            color="primary"
+                          >
                             <ThumbUpIcon />
                           </IconButton>
-                          <Typography variant="body2">Upvotes: {a.upvotes || 0}</Typography>
+                          <Typography variant="body2">
+                            Upvotes: {a.upvotes || 0}
+                          </Typography>
 
-                          <IconButton onClick={() => handleAnswerVote(a._id, -1)} color="error">
+                          <IconButton
+                            onClick={() => handleAnswerVote(a._id, -1)}
+                            color="error"
+                          >
                             <ThumbDownIcon />
                           </IconButton>
-                          <Typography variant="body2">Downvotes: {a.downvotes || 0}</Typography>
+                          <Typography variant="body2">
+                            Downvotes: {a.downvotes || 0}
+                          </Typography>
                         </Box>
 
                         {user && a.answeredBy?._id === user._id && (
                           <Box sx={{ mt: 1, display: "flex", gap: 1 }}>
-                            <Button size="small" onClick={() => handleEdit(a)}>
+                            <Button
+                              size="small"
+                              onClick={() => handleEdit(a)}
+                            >
                               Edit
                             </Button>
-                            <Button size="small" color="error" onClick={() => handleDeleteAnswer(a._id)}>
+                            <Button
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteAnswer(a._id)}
+                            >
                               Delete
                             </Button>
                           </Box>
@@ -260,17 +312,11 @@ const QuestionDetails = () => {
             </Stack>
           )}
 
+          {/* --- Answer Form --- */}
           {user && (
             <>
               <Divider sx={{ my: 4 }} />
-              <Typography
-                variant="h6"
-                gutterBottom
-                sx={{
-                  fontSize: { xs: "1rem", sm: "1.2rem", md: "1.4rem" },
-                  fontWeight: 500,
-                }}
-              >
+              <Typography variant="h6" gutterBottom>
                 Your Answer
               </Typography>
               <form onSubmit={handleAnswerSubmit}>

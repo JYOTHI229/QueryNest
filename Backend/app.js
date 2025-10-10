@@ -39,7 +39,7 @@ app.use((req, res, next) => {
 });
 
 
-
+/* 
 const allowedOrigins = [process.env.CLIENT_URL ,  "http://localhost:5173"];
 
 app.use(cors({
@@ -53,6 +53,11 @@ app.use(cors({
     }
   },
   credentials: true
+}));
+*/
+app.use(cors({
+  origin: true, // allows all origins for testing
+  credentials: true, // allows cookies and headers
 }));
 
 

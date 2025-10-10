@@ -1,4 +1,3 @@
-// src/App.jsx
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import Register from "./pages/Register";
@@ -69,4 +68,4 @@ function App() {
   );
 }
 
-export default App;
+export default App;               

@@ -8,12 +8,16 @@ const answerSchema = new mongoose.Schema({
   answeredBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
+    required:false,
   },
   question: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Question",
     required: true,
+  },
+  isAI: { 
+    type: Boolean, 
+    default: false 
   },
   votes: {
     type: Map,

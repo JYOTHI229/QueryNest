@@ -1,4 +1,6 @@
 import { Question } from "../models/questionModel.js";
+import Answer from "../models/answerModel.js";
+import getOpenAIAPIResponse from "../utils/openai.js"; 
 
 // POST /questions/posted
 export const postQuestion = async (req, res) => {
@@ -19,6 +21,18 @@ export const postQuestion = async (req, res) => {
       description,
       askedBy: userId,
     });
+
+    // Generate AI-powered answer
+    const aiPrompt = `Provide a clear, factual, and concise answer to the following question:\n"${title}"\n\n${description}`;
+    const aiResponse = await getOpenAIAPIResponse(aiPrompt);
+
+    // Save AI answer as special entry
+    await Answer.create({
+      content: aiResponse,
+      question: newQuestion._id,
+      isAI: true,
+    });
+
 
     res.status(201).json({
       message: "Question posted",

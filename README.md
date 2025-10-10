@@ -28,7 +28,7 @@ Built using the **MERN Stack (MongoDB, Express, React, Node.js)** and styled wit
 - View all **Q&A** under each profile
 - Click answers to view the **full question context**
 
-### 🤖 AI-Powered Answers *(Core Feature)*
+### 🤖 AI-Powered Answers
 - Automatically generates **AI responses** to user questions
 - Users can **like/dislike** AI-generated content
 - Encourages discussion by combining **AI insights** with **human opinions**
